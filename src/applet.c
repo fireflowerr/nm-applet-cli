@@ -13,6 +13,8 @@
  * Copyright 2001, 2002 Free Software Foundation
  */
 
+// 11/24/2019 CLI: modified to allow external hook to popup menu
+
 #include "nm-default.h"
 
 #include <time.h>
@@ -22,6 +24,7 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <libnotify/notify.h>
+#include <signal.h>
 
 #include "applet.h"
 #include "applet-device-bt.h"
@@ -3150,6 +3153,28 @@ status_icon_activate_cb (GtkStatusIcon *icon, NMApplet *applet)
 	                1, gtk_get_current_event_time ());
 }
 
+// CLI: initalize struct for hook
+NMApplet *cli_applet;
+GtkStatusIcon *cli_icon;
+guint cli_id;
+
+// CLI: activate popup menu from signal
+static
+void nm_trigger_popup_menu(int signal) {
+  status_icon_activate_cb (cli_icon, cli_applet);
+}
+
+// CLI: activate popup status from signal
+static
+void nm_trigger_popup_status(int signal) {
+  applet_clear_notify (cli_applet);
+  nma_context_menu_update (cli_applet);
+  gtk_menu_popup (GTK_MENU (cli_applet->context_menu), NULL, NULL,
+    gtk_status_icon_position_menu, cli_icon,
+    1, gtk_get_current_event_time ());
+}
+
+
 static void
 status_icon_popup_menu_cb (GtkStatusIcon *icon,
                            guint button,
@@ -3199,6 +3224,13 @@ setup_widgets (NMApplet *applet)
 				  G_CALLBACK (status_icon_activate_cb), applet);
 		g_signal_connect (applet->status_icon, "popup-menu",
 				  G_CALLBACK (status_icon_popup_menu_cb), applet);
+
+		// CLI: wire to intercept sigusr signals
+		cli_applet=applet;
+		cli_icon=applet->status_icon;
+    signal(SIGUSR1, nm_trigger_popup_menu);
+    signal(SIGUSR2, nm_trigger_popup_status);
+
 
 		menu = GTK_MENU (gtk_menu_new ());
 		nma_context_menu_populate (applet, menu);
