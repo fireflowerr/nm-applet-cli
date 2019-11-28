@@ -9,6 +9,7 @@
  */
 
 // 11/24/2019 CLI: modified to allow external hook to popup menu
+// 11/27/2019 CLI: modified to prevent blank overlay in bot right of screen
 
 #include "nm-default.h"
 
@@ -24,6 +25,8 @@
 gboolean shell_debug = FALSE;
 gboolean with_agent = TRUE;
 gboolean with_appindicator = FALSE;
+gboolean with_icon = TRUE;
+
 static const char *PID_FILE = "/tmp/nm-applet.pid";
 static void
 usage (const char *progname)
@@ -34,7 +37,7 @@ usage (const char *progname)
 	                 _("Usage:"),
 	                 basename,
 	                 _("This program is a component of NetworkManager (https://wiki.gnome.org/Projects/NetworkManager/)."),
-	                 _("It has been modified on 11/24/2019 for command line interaction. --menu to trigger popup menu. --status to trigger popup status. --set-pid [pid] to manually update the pidfile"));
+	                 _("It has been modified on 11/24/2019 for command line interaction. --menu to trigger popup menu. --status to trigger popup status. --set-pid [pid] to manually update the pidfile. --no-icon to prevent the icon from displaying"));
 }
 
 // CLI: add external hook for controlling this applet
@@ -92,6 +95,9 @@ int main (int argc, char *argv[])
     }
 		else if (!strcmp (argv[i], "--status")) {
       kill(*pid, SIGUSR2);
+    }
+		else if (!strcmp (argv[i], "--no-icon")) {
+      with_icon = FALSE;
     }
 		else if (!strcmp (argv[i], "--set-pid")) {
       int pid = atoi(argv[++i]);

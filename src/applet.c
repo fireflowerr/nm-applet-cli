@@ -14,6 +14,7 @@
  */
 
 // 11/24/2019 CLI: modified to allow external hook to popup menu
+// 11/27/2019 CLI: modified to prevent blank overlay in bot right of screen
 
 #include "nm-default.h"
 
@@ -43,6 +44,7 @@
 
 extern gboolean shell_debug;
 extern gboolean with_agent;
+extern gboolean with_icon;
 extern gboolean with_appindicator;
 
 #ifdef WITH_APPINDICATOR
@@ -3213,15 +3215,16 @@ setup_widgets (NMApplet *applet)
 	if (!INDICATOR_ENABLED (applet)) {
 		applet->status_icon = gtk_status_icon_new ();
 
-		if (shell_debug)
+		if (shell_debug) {
 			gtk_status_icon_set_name (applet->status_icon, "adsfasdfasdfadfasdf");
+    }
 
 		g_signal_connect (applet->status_icon, "notify::screen",
 				  G_CALLBACK (status_icon_screen_changed_cb), applet);
 		g_signal_connect (applet->status_icon, "size-changed",
 				  G_CALLBACK (status_icon_size_changed_cb), applet);
-		g_signal_connect (applet->status_icon, "activate",
-				  G_CALLBACK (status_icon_activate_cb), applet);
+    g_signal_connect (applet->status_icon, "activate",
+          G_CALLBACK (status_icon_activate_cb), applet);
 		g_signal_connect (applet->status_icon, "popup-menu",
 				  G_CALLBACK (status_icon_popup_menu_cb), applet);
 
@@ -3324,7 +3327,7 @@ applet_startup (GApplication *app, gpointer user_data)
 	}
 
 	applet->gsettings = g_settings_new (APPLET_PREFS_SCHEMA);
-	applet->visible = g_settings_get_boolean (applet->gsettings, PREF_SHOW_APPLET);
+	applet->visible = with_icon;
 	g_signal_connect (applet->gsettings, "changed::show-applet",
 	                  G_CALLBACK (applet_gsettings_show_changed), applet);
 
